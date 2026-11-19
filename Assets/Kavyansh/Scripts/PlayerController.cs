@@ -28,6 +28,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxZoomIn = 1.5f;
     [SerializeField] private float zoomSmoothTime = 0.25f;
 
+    [Header("Visual Rotation")]
+    [SerializeField] private Transform playerVisual;
+    [SerializeField] private float visualRotationSpeed = 240f;
+    [SerializeField] private float visualRotationInfluence = 0.8f;
+
     private float originalCameraSize;
     private float zoomVelocity;
 
@@ -190,36 +195,35 @@ public class PlayerController : MonoBehaviour
         // Apply launch velocity.
         rb.linearVelocity = launchDirection * jumpForce;
 
-/*        // Tilt the character towards the launch direction.
-        targetRotation = -launchAngle * rotationInfluence;
-
-        transform.rotation = Quaternion.Euler(
-            0f, 0f, targetRotation
-        );*/
-
         chargeTimer = 0f;
         launchAngle = 0f;
     }
 
     private void UpdateRotation()
     {
+        if (playerVisual == null)
+            return;
+
         float targetAngle = 0f;
 
-        // Visually tilt while charging the jump.
+        // Rotate only the visual while charging.
         if (isCharging)
         {
-            targetAngle = -launchAngle * rotationInfluence;
+            targetAngle = -launchAngle * visualRotationInfluence;
         }
 
-        // Smoothly rotate towards the desired angle.
+        // Smoothly return to original rotation.
+        float currentAngle = playerVisual.localEulerAngles.z;
+
         float newAngle = Mathf.MoveTowardsAngle(
-            rb.rotation,
+            currentAngle,
             targetAngle,
-            (isCharging ? aimRotationSpeed : rotationReturnSpeed)
-            * Time.fixedDeltaTime
+            visualRotationSpeed * Time.fixedDeltaTime
         );
 
-        rb.MoveRotation(newAngle);
+        playerVisual.localRotation = Quaternion.Euler(
+            0f, 0f, newAngle
+        );
     }
 
     private void OnDrawGizmosSelected()
